@@ -1,5 +1,7 @@
 import type { Command } from 'commander';
 import { readFile } from 'node:fs/promises';
+import { createInterface } from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
 import { createClient, debug, type GlobalOptions } from '../utils/client.js';
 import { formatOutput, type OutputFormat } from '../utils/output.js';
 import type { WorkflowCreateInput, WorkflowUpdateInput } from '../client/types.js';
@@ -128,5 +130,41 @@ export function registerWorkflowCommands(program: Command): void {
 
       const format: OutputFormat = options.json ? 'json' : 'detail';
       console.log(formatOutput(workflow, format, 'workflow'));
+    });
+
+  workflows
+    .command('delete')
+    .description('Delete a workflow by ID')
+    .argument('<id>', 'Workflow ID')
+    .option('--force, -f', 'Skip confirmation prompt')
+    .option('--json', 'Output as JSON')
+    .action(async (id: string, options: { force?: boolean; json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+
+      debug(globalOpts, `Deleting workflow ${id}...`);
+
+      if (!options.force) {
+        const rl = createInterface({ input, output });
+        try {
+          const answer = await rl.question(`Delete workflow ${id}? (y/N): `);
+          if (answer.toLowerCase() !== 'y') {
+            console.log('Aborted.');
+            return;
+          }
+        } finally {
+          rl.close();
+        }
+      }
+
+      const client = createClient(globalOpts);
+      await client.deleteWorkflow(id);
+
+      debug(globalOpts, `Deleted workflow: ${id}`);
+
+      if (options.json) {
+        console.log(JSON.stringify({ deleted: true, id }));
+      } else {
+        console.log(`Workflow ${id} deleted`);
+      }
     });
 }
