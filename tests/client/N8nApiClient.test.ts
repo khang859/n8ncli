@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { N8nApiClient } from '../../src/client/index.js';
 import type { N8nWorkflow, ListWorkflowsResponse } from '../../src/client/types.js';
+import {
+  N8nApiError,
+  N8nAuthenticationError,
+  N8nConnectionError,
+} from '../../src/errors/index.js';
 
 // Helper to create a mock Response object
 function createMockResponse(data: unknown, options: { status?: number; ok?: boolean } = {}): Response {
@@ -318,6 +323,188 @@ describe('N8nApiClient', () => {
         'https://n8n.example.com/api/v1/workflows',
         expect.any(Object)
       );
+    });
+  });
+
+  describe('error handling', () => {
+    describe('N8nConnectionError', () => {
+      it('throws N8nConnectionError when fetch throws TypeError (network error)', async () => {
+        const networkError = new TypeError('Failed to fetch');
+        mockFetch.mockRejectedValue(networkError);
+
+        await expect(client.listWorkflows()).rejects.toThrow(N8nConnectionError);
+        await expect(client.listWorkflows()).rejects.toThrow(
+          `Failed to connect to n8n at ${baseUrl}`
+        );
+      });
+
+      it('throws N8nConnectionError when fetch rejects with any error', async () => {
+        const genericError = new Error('ECONNREFUSED');
+        mockFetch.mockRejectedValue(genericError);
+
+        await expect(client.getWorkflow('wf-123')).rejects.toThrow(N8nConnectionError);
+      });
+
+      it('wraps original error as cause in N8nConnectionError', async () => {
+        const originalError = new Error('Connection refused');
+        mockFetch.mockRejectedValue(originalError);
+
+        try {
+          await client.listWorkflows();
+          expect.fail('Should have thrown');
+        } catch (error) {
+          expect(error).toBeInstanceOf(N8nConnectionError);
+          expect((error as N8nConnectionError).cause).toBe(originalError);
+        }
+      });
+    });
+
+    describe('N8nAuthenticationError', () => {
+      it('throws N8nAuthenticationError on 401 response', async () => {
+        mockFetch.mockResolvedValue(
+          createMockResponse({ message: 'Unauthorized' }, { status: 401, ok: false })
+        );
+
+        await expect(client.listWorkflows()).rejects.toThrow(N8nAuthenticationError);
+      });
+
+      it('throws N8nAuthenticationError with default message', async () => {
+        mockFetch.mockResolvedValue(
+          createMockResponse({}, { status: 401, ok: false })
+        );
+
+        await expect(client.listWorkflows()).rejects.toThrow(
+          'Authentication failed. Check your API key.'
+        );
+      });
+    });
+
+    describe('N8nApiError', () => {
+      it('throws N8nApiError on 400 response', async () => {
+        mockFetch.mockResolvedValue(
+          createMockResponse({ message: 'Bad request' }, { status: 400, ok: false })
+        );
+
+        await expect(client.createWorkflow({ name: '' })).rejects.toThrow(N8nApiError);
+      });
+
+      it('throws N8nApiError on 404 response', async () => {
+        mockFetch.mockResolvedValue(
+          createMockResponse({ message: 'Workflow not found' }, { status: 404, ok: false })
+        );
+
+        await expect(client.getWorkflow('non-existent')).rejects.toThrow(N8nApiError);
+      });
+
+      it('throws N8nApiError on 500 response', async () => {
+        mockFetch.mockResolvedValue(
+          createMockResponse({ message: 'Internal server error' }, { status: 500, ok: false })
+        );
+
+        await expect(client.listWorkflows()).rejects.toThrow(N8nApiError);
+      });
+
+      it('includes status code in N8nApiError', async () => {
+        mockFetch.mockResolvedValue(
+          createMockResponse({ message: 'Not found' }, { status: 404, ok: false })
+        );
+
+        try {
+          await client.getWorkflow('wf-404');
+          expect.fail('Should have thrown');
+        } catch (error) {
+          expect(error).toBeInstanceOf(N8nApiError);
+          expect((error as N8nApiError).statusCode).toBe(404);
+        }
+      });
+
+      it('includes message from response in error', async () => {
+        mockFetch.mockResolvedValue(
+          createMockResponse({ message: 'Workflow not found' }, { status: 404, ok: false })
+        );
+
+        await expect(client.getWorkflow('wf-404')).rejects.toThrow('Workflow not found');
+      });
+
+      it('uses generic message when response has no message field', async () => {
+        mockFetch.mockResolvedValue(
+          createMockResponse({ error: 'something went wrong' }, { status: 500, ok: false })
+        );
+
+        await expect(client.listWorkflows()).rejects.toThrow(
+          'Request failed with status 500'
+        );
+      });
+
+      it('handles non-JSON error response gracefully', async () => {
+        const response = {
+          ok: false,
+          status: 502,
+          json: vi.fn().mockRejectedValue(new SyntaxError('Unexpected token')),
+          headers: new Headers(),
+          redirected: false,
+          statusText: 'Bad Gateway',
+          type: 'basic',
+          url: '',
+          clone: vi.fn(),
+          body: null,
+          bodyUsed: false,
+          arrayBuffer: vi.fn(),
+          blob: vi.fn(),
+          formData: vi.fn(),
+          text: vi.fn(),
+          bytes: vi.fn(),
+        } as unknown as Response;
+        mockFetch.mockResolvedValue(response);
+
+        await expect(client.listWorkflows()).rejects.toThrow(N8nApiError);
+        await expect(client.listWorkflows()).rejects.toThrow(
+          'Request failed with status 502'
+        );
+      });
+    });
+
+    describe('testConnection error handling', () => {
+      it('returns failure result on N8nAuthenticationError', async () => {
+        mockFetch.mockResolvedValue(
+          createMockResponse({}, { status: 401, ok: false })
+        );
+
+        const result = await client.testConnection();
+
+        expect(result).toEqual({
+          success: false,
+          workflowCount: 0,
+          message: 'Authentication failed. Check your API key.',
+        });
+      });
+
+      it('returns failure result on N8nConnectionError', async () => {
+        mockFetch.mockRejectedValue(new TypeError('Failed to fetch'));
+
+        const result = await client.testConnection();
+
+        expect(result).toEqual({
+          success: false,
+          workflowCount: 0,
+          message: `Connection failed: Failed to connect to n8n at ${baseUrl}`,
+        });
+      });
+
+      it('returns failure result with error message on other errors', async () => {
+        // N8nApiError (e.g., 500 error)
+        mockFetch.mockResolvedValue(
+          createMockResponse({ message: 'Server error' }, { status: 500, ok: false })
+        );
+
+        const result = await client.testConnection();
+
+        expect(result).toEqual({
+          success: false,
+          workflowCount: 0,
+          message: 'Server error',
+        });
+      });
     });
   });
 });
