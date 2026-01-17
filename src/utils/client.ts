@@ -9,11 +9,15 @@ export interface GlobalOptions {
 }
 
 export function createClient(options: GlobalOptions): N8nApiClient {
-  const config = loadConfig();
+  // Pass CLI options to loadConfig for proper priority handling
+  const config = loadConfig({
+    host: options.host,
+    apiKey: options.apiKey,
+  });
 
   return new N8nApiClient({
-    baseUrl: options.host ?? config.host,
-    apiKey: options.apiKey ?? config.apiKey,
+    baseUrl: config.host,
+    apiKey: config.apiKey,
   });
 }
 

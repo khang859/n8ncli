@@ -37,7 +37,7 @@ export function analyzeError(error: unknown): ErrorResult {
   if (error instanceof N8nAuthenticationError) {
     return {
       message: `Authentication Error: ${error.message}`,
-      hint: 'Check your N8N_API_KEY environment variable or --api-key flag',
+      hint: 'Check your API key (run "n8ncli config set apikey <key>" or set N8N_API_KEY)',
       exitCode: ExitCode.MISUSE,
     };
   }
@@ -45,7 +45,7 @@ export function analyzeError(error: unknown): ErrorResult {
   if (error instanceof N8nConnectionError) {
     return {
       message: `Connection Error: ${error.message}`,
-      hint: 'Verify N8N_HOST is correct and n8n is running',
+      hint: 'Verify host is correct (run "n8ncli config set host <url>" or set N8N_HOST)',
       exitCode: ExitCode.ERROR,
     };
   }
@@ -58,10 +58,10 @@ export function analyzeError(error: unknown): ErrorResult {
   }
 
   if (error instanceof Error) {
-    if (error.message.includes('environment variable is required')) {
+    if (error.message.includes('is required')) {
       return {
         message: `Configuration Error: ${error.message}`,
-        hint: 'Set N8N_HOST and N8N_API_KEY environment variables',
+        hint: 'Run "n8ncli config set host <url>" and "n8ncli config set apikey <key>" or set environment variables',
         exitCode: ExitCode.MISUSE,
       };
     }
