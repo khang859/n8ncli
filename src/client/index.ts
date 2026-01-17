@@ -122,6 +122,18 @@ export class N8nApiClient {
     return this.request<N8nWorkflow>('PUT', `/workflows/${id}`, data);
   }
 
+  async deleteWorkflow(id: string): Promise<void> {
+    return this.request<void>('DELETE', `/workflows/${id}`);
+  }
+
+  async activateWorkflow(id: string): Promise<N8nWorkflow> {
+    return this.request<N8nWorkflow>('POST', `/workflows/${id}/activate`);
+  }
+
+  async deactivateWorkflow(id: string): Promise<N8nWorkflow> {
+    return this.request<N8nWorkflow>('POST', `/workflows/${id}/deactivate`);
+  }
+
   async testConnection(): Promise<TestConnectionResult> {
     try {
       const workflows = await this.listWorkflows({ limit: 1 });
