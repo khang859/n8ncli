@@ -46,3 +46,19 @@ export interface TestConnectionResult {
   workflowCount: number;
   message?: string;
 }
+
+export interface WorkflowCreateInput {
+  name: string;
+  nodes?: N8nWorkflowNode[];
+  connections?: Record<string, Record<string, N8nWorkflowConnection[][]>>;
+  settings?: Record<string, unknown>;
+  tags?: Array<{ id: string; name: string }>;
+}
+
+export interface WorkflowUpdateInput {
+  name?: string;
+  nodes?: N8nWorkflowNode[];
+  connections?: Record<string, Record<string, N8nWorkflowConnection[][]>>;
+  settings?: Record<string, unknown>;
+  tags?: Array<{ id: string; name: string }>;
+}

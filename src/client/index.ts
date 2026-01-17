@@ -9,6 +9,8 @@ import type {
   ListWorkflowsOptions,
   ListWorkflowsResponse,
   TestConnectionResult,
+  WorkflowCreateInput,
+  WorkflowUpdateInput,
 } from './types.js';
 
 export class N8nApiClient {
@@ -110,6 +112,14 @@ export class N8nApiClient {
 
   async getWorkflow(id: string): Promise<N8nWorkflow> {
     return this.request<N8nWorkflow>('GET', `/workflows/${id}`);
+  }
+
+  async createWorkflow(data: WorkflowCreateInput): Promise<N8nWorkflow> {
+    return this.request<N8nWorkflow>('POST', '/workflows', data);
+  }
+
+  async updateWorkflow(id: string, data: WorkflowUpdateInput): Promise<N8nWorkflow> {
+    return this.request<N8nWorkflow>('PUT', `/workflows/${id}`, data);
   }
 
   async testConnection(): Promise<TestConnectionResult> {
