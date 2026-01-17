@@ -92,4 +92,41 @@ export function registerWorkflowCommands(program: Command): void {
       const format: OutputFormat = options.json ? 'json' : 'detail';
       console.log(formatOutput(workflow, format, 'workflow'));
     });
+
+  workflows
+    .command('update')
+    .description('Update an existing workflow from a JSON file')
+    .argument('<id>', 'Workflow ID')
+    .requiredOption('-f, --file <path>', 'Path to workflow JSON file')
+    .option('--json', 'Output as JSON')
+    .action(async (id: string, options: { file: string; json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+
+      debug(globalOpts, `Updating workflow ${id} from file: ${options.file}`);
+
+      let fileContent: string;
+      try {
+        fileContent = await readFile(options.file, 'utf-8');
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+          throw new Error(`File not found: ${options.file}`);
+        }
+        throw error;
+      }
+
+      let data: WorkflowUpdateInput;
+      try {
+        data = JSON.parse(fileContent) as WorkflowUpdateInput;
+      } catch (error) {
+        throw new Error(`Invalid JSON in file: ${(error as Error).message}`);
+      }
+
+      const client = createClient(globalOpts);
+      const workflow = await client.updateWorkflow(id, data);
+
+      debug(globalOpts, `Updated workflow: ${workflow.id}`);
+
+      const format: OutputFormat = options.json ? 'json' : 'detail';
+      console.log(formatOutput(workflow, format, 'workflow'));
+    });
 }
