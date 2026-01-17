@@ -16,6 +16,7 @@ None
 
 - [x] **Phase 1: Create & Update Commands** - File-based workflow operations with JSON input
 - [x] **Phase 2: State Operations** - Delete, activate, and deactivate commands
+- [x] **Phase 3: Unit Tests** - Reorganize test structure and add comprehensive unit tests
 
 ## Phase Details
 
@@ -42,12 +43,26 @@ Key deliverables:
 - `workflows activate <id>` command
 - `workflows deactivate <id>` command
 
+### Phase 3: Unit Tests
+**Goal**: Reorganize test structure into `tests/` folder and add comprehensive unit tests for all commands
+**Depends on**: Phase 2
+**Research**: Unlikely (standard Vitest testing patterns)
+**Plans**: 3 (complete)
+
+Key deliverables:
+- Create `tests/` folder structure
+- Move existing tests (`src/config.test.ts`, `src/utils/configStore.test.ts`) to `tests/`
+- Add unit tests for N8nApiClient methods (30 tests)
+- Add unit tests for all workflow commands (39 tests)
+- Update test configuration
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2
+Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Create & Update Commands | 1/1 | Complete | 2026-01-17 |
 | 2. State Operations | 2/2 | Complete | 2026-01-17 |
+| 3. Unit Tests | 3/3 | Complete | 2026-01-17 |

@@ -1,0 +1,20 @@
+{
+  "version": "1.2",
+  "max_entries": 50,
+  "entries": [
+    {
+      "agent_id": "a2225a4",
+      "task_description": "Parallel: Execute 03-01-PLAN.md (test reorganization)",
+      "phase": "03",
+      "plan": "01",
+      "parallel_group": "pg-20260117",
+      "wave": 1,
+      "depends_on": [],
+      "timestamp": "2026-01-17T10:30:00Z",
+      "status": "spawned",
+      "files_modified": [],
+      "completion_timestamp": null,
+      "deviations": []
+    }
+  ]
+}
