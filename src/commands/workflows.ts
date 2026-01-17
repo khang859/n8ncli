@@ -1,6 +1,8 @@
 import type { Command } from 'commander';
+import { readFile } from 'node:fs/promises';
 import { createClient, debug, type GlobalOptions } from '../utils/client.js';
 import { formatOutput, type OutputFormat } from '../utils/output.js';
+import type { WorkflowCreateInput, WorkflowUpdateInput } from '../client/types.js';
 
 export function registerWorkflowCommands(program: Command): void {
   const workflows = program
@@ -50,6 +52,42 @@ export function registerWorkflowCommands(program: Command): void {
       const client = createClient(globalOpts);
 
       const workflow = await client.getWorkflow(id);
+
+      const format: OutputFormat = options.json ? 'json' : 'detail';
+      console.log(formatOutput(workflow, format, 'workflow'));
+    });
+
+  workflows
+    .command('create')
+    .description('Create a new workflow from a JSON file')
+    .requiredOption('-f, --file <path>', 'Path to workflow JSON file')
+    .option('--json', 'Output as JSON')
+    .action(async (options: { file: string; json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+
+      debug(globalOpts, `Creating workflow from file: ${options.file}`);
+
+      let fileContent: string;
+      try {
+        fileContent = await readFile(options.file, 'utf-8');
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+          throw new Error(`File not found: ${options.file}`);
+        }
+        throw error;
+      }
+
+      let data: WorkflowCreateInput;
+      try {
+        data = JSON.parse(fileContent) as WorkflowCreateInput;
+      } catch (error) {
+        throw new Error(`Invalid JSON in file: ${(error as Error).message}`);
+      }
+
+      const client = createClient(globalOpts);
+      const workflow = await client.createWorkflow(data);
+
+      debug(globalOpts, `Created workflow: ${workflow.id}`);
 
       const format: OutputFormat = options.json ? 'json' : 'detail';
       console.log(formatOutput(workflow, format, 'workflow'));
