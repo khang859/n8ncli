@@ -11,7 +11,7 @@ import {
   maskApiKey,
   validateHost,
   normalizeKey,
-} from './configStore.js';
+} from '../../src/utils/configStore.js';
 
 // Mock the fs and os modules
 vi.mock('node:fs');

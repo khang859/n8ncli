@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { loadConfig, loadConfigWithSources } from './config.js';
-import * as configStore from './utils/configStore.js';
+import { loadConfig, loadConfigWithSources } from '../src/config.js';
+import * as configStore from '../src/utils/configStore.js';
 
 // Mock the configStore module
-vi.mock('./utils/configStore.js', () => ({
+vi.mock('../src/utils/configStore.js', () => ({
   loadPersistedConfig: vi.fn(),
 }));
 
