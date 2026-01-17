@@ -167,4 +167,23 @@ export function registerWorkflowCommands(program: Command): void {
         console.log(`Workflow ${id} deleted`);
       }
     });
+
+  workflows
+    .command('activate')
+    .description('Activate a workflow by ID')
+    .argument('<id>', 'Workflow ID')
+    .option('--json', 'Output as JSON')
+    .action(async (id: string, options: { json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+
+      debug(globalOpts, `Activating workflow ${id}...`);
+
+      const client = createClient(globalOpts);
+      const workflow = await client.activateWorkflow(id);
+
+      debug(globalOpts, `Activated workflow: ${id}`);
+
+      const format: OutputFormat = options.json ? 'json' : 'detail';
+      console.log(formatOutput(workflow, format, 'workflow'));
+    });
 }
