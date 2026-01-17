@@ -35,7 +35,7 @@ Key deliverables:
 **Goal**: Add `workflows delete`, `workflows activate`, and `workflows deactivate` commands
 **Depends on**: Phase 1
 **Research**: Unlikely (ID-based operations, standard CLI confirmation patterns)
-**Plans**: TBD
+**Plans**: 2
 
 Key deliverables:
 - `workflows delete <id>` command with confirmation prompt
@@ -50,4 +50,4 @@ Phases execute in numeric order: 1 → 2
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Create & Update Commands | 1/1 | Complete | 2026-01-17 |
-| 2. State Operations | 0/TBD | Not started | - |
+| 2. State Operations | 0/2 | Planned | - |
