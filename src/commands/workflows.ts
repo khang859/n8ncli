@@ -186,4 +186,23 @@ export function registerWorkflowCommands(program: Command): void {
       const format: OutputFormat = options.json ? 'json' : 'detail';
       console.log(formatOutput(workflow, format, 'workflow'));
     });
+
+  workflows
+    .command('deactivate')
+    .description('Deactivate a workflow by ID')
+    .argument('<id>', 'Workflow ID')
+    .option('--json', 'Output as JSON')
+    .action(async (id: string, options: { json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+
+      debug(globalOpts, `Deactivating workflow ${id}...`);
+
+      const client = createClient(globalOpts);
+      const workflow = await client.deactivateWorkflow(id);
+
+      debug(globalOpts, `Deactivated workflow: ${id}`);
+
+      const format: OutputFormat = options.json ? 'json' : 'detail';
+      console.log(formatOutput(workflow, format, 'workflow'));
+    });
 }
